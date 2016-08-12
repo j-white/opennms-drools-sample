@@ -31,20 +31,20 @@ package com.example.sample.drools;
 import static org.junit.Assert.assertEquals;
 import static org.opennms.core.utils.InetAddressUtils.addr;
 
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
-import org.opennms.netmgt.EventConstants;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
+import org.opennms.core.test.ConfigurationTestUtils;
 import org.opennms.netmgt.correlation.CorrelationEngineRegistrar;
 import org.opennms.netmgt.correlation.drools.DroolsCorrelationEngine;
-import org.opennms.test.JUnitConfigurationEnvironment;
-import org.opennms.netmgt.eventd.mock.EventAnticipator;
-import org.opennms.netmgt.eventd.mock.MockEventIpcManager;
+import org.opennms.netmgt.dao.mock.EventAnticipator;
+import org.opennms.netmgt.dao.mock.MockEventIpcManager;
+import org.opennms.netmgt.events.api.EventConstants;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.netmgt.xml.event.Event;
-import org.opennms.core.test.ConfigurationTestUtils;
+import org.opennms.test.JUnitConfigurationEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * The Class CorrelationRulesTestCase.
@@ -61,6 +61,12 @@ import org.springframework.test.context.ContextConfiguration;
 })
 @JUnitConfigurationEnvironment
 public abstract class CorrelationRulesTestCase {
+
+    @BeforeClass
+    public static void setUpClass() {
+        // Prevent the ActiveMQ broker from starting up when load "applicationContext-daemon.xml"
+        System.setProperty("org.opennms.activemq.broker.disable", "true");
+    }
 
     /** The event IPC manager. */
     @Autowired
@@ -97,7 +103,7 @@ public abstract class CorrelationRulesTestCase {
     protected void verify(DroolsCorrelationEngine engine) {
         getAnticipator().verifyAnticipated(0, 0, 0, 0, 0);
         if (m_anticipatedMemorySize != null) {
-            assertEquals("Unexpected number of objects in working memory: "+engine.getMemoryObjects(), m_anticipatedMemorySize.intValue(), engine.getMemorySize());
+            assertEquals("Unexpected number of objects in working memory: "+engine.getKieSessionObjects().size(), m_anticipatedMemorySize.intValue(), engine.getKieSessionObjects().size());
         }
     }
 
